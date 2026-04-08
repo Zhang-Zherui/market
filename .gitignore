@@ -1,0 +1,62 @@
+# ==================== Java / Spring Boot ====================
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# Package files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# Maven
+backend/target/
+
+# Gradle
+.gradle/
+build/
+
+# IDE - IntelliJ IDEA
+*.iml
+.idea/
+out/
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+
+# IDE - VS Code
+.vscode/
+
+# ==================== Node / Vue Frontend ====================
+# Dependencies
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+
+# Local env files
+.env
+.env.local
+.env.*.local
+
+# Editor directories and files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ==================== CodeBuddy ====================
+.codebuddy/

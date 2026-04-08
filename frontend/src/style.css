@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: local('PP Neue Montreal'), local('Helvetica Neue'), local('Arial');
+  font-weight: 400 700;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in-delay {
+    animation: fadeIn 600ms ease-out 200ms both;
+  }
+  .animate-fade-in-delay-2 {
+    animation: fadeIn 600ms ease-out 400ms both;
+  }
+}
