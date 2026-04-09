@@ -44,10 +44,17 @@ export const getMyOrders = () => request.get('/voucher-order/my')
 export const getOrderDetail = (id) => request.get(`/voucher-order/${id}`)
 
 export const payOrder = (id, payType) =>
-  request.put(`/voucher-order/${id}/pay`, null, { params: { payType } })
+  request({
+    url: `/voucher-order/${id}/pay`,
+    method: 'put',
+    params: { payType: Number(payType) },
+    data: {},
+  })
 
 export const cancelOrder = (id) => request.put(`/voucher-order/${id}/cancel`)
 
-export const useRefund = (id) => request.put(`/voucher-order/${id}/refund`)
+export const refundOrder = (id) => request.put(`/voucher-order/${id}/refund`)
 
 export const confirmRefund = (id) => request.put(`/voucher-order/${id}/refund/confirm`)
+
+export const useOrder = (id) => request.put(`/voucher-order/${id}/use`)

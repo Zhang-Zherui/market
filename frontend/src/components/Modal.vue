@@ -1,5 +1,8 @@
 <template>
-  <div v-if="visible" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in">
+  <div
+    v-if="visible"
+    class="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm animate-fade-in"
+  >
     <div class="bg-white rounded shadow-card p-8 max-w-md w-full mx-4">
       <h3 class="font-heading text-lg font-semibold mb-6">{{ title }}</h3>
       <slot />
@@ -30,5 +33,6 @@ defineProps({
   visible: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
 })
+
 defineEmits(['confirm', 'cancel'])
 </script>

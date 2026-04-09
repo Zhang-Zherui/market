@@ -63,4 +63,10 @@ public interface IVoucherOrderService extends IService<VoucherOrder> {
      */
     Result buyVoucher(Long voucherId);
 
+    /**
+     * 扫描已支付但支付超时的订单，直接标记为已退款
+     * @return 本次处理的订单数
+     */
+    int expirePaidOrders();
+
 }

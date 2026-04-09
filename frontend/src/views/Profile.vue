@@ -2,7 +2,6 @@
   <div class="min-h-screen bg-gray-50/80 pt-16">
     <NavBar />
     <div class="max-w-5xl mx-auto px-16 py-8">
-      <!-- 用户信息卡片 -->
       <div class="bg-white rounded shadow-card p-8 mb-8 animate-fade-in">
         <div class="flex items-center gap-4">
           <div class="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center text-accent font-heading font-bold text-xl">
@@ -13,7 +12,7 @@
             <p class="text-sm text-primary/40">{{ userInfo.email }}</p>
           </div>
           <button
-            @click="showEditModal = true"
+            @click="openEditModal"
             class="px-4 py-1.5 rounded text-xs font-medium text-primary/60 hover:text-primary border border-primary/10 hover:border-primary/20 transition-all duration-300"
           >
             编辑资料
@@ -21,10 +20,9 @@
         </div>
       </div>
 
-      <!-- 订单列表 -->
-      <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center justify-between mb-6 gap-4 flex-wrap">
         <h3 class="text-lg font-heading font-semibold text-primary">我的订单</h3>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button
             v-for="s in orderStatuses"
             :key="s.value"
@@ -58,16 +56,19 @@
           :key="order.id"
           class="bg-white rounded shadow-card p-6 transition-all duration-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
         >
-          <div class="flex justify-between items-start mb-3">
+          <div class="flex justify-between items-start gap-4 mb-3">
             <div>
               <h4 class="text-sm font-semibold text-primary">{{ order.voucherTitle || '优惠券' }}</h4>
               <p class="text-xs text-primary/40 mt-0.5">
-                订单号: {{ order.id }} · {{ formatTime(order.createTime) }}
+                订单号 {{ order.id }} · {{ formatTime(order.createTime) }}
+              </p>
+              <p v-if="order.status >= 2" class="text-xs text-primary/40 mt-1">
+                支付方式：{{ payTypeLabel(order.payType) }}
               </p>
             </div>
             <span
               :class="[
-                'text-xs px-2 py-1 rounded font-medium',
+                'text-xs px-2 py-1 rounded font-medium whitespace-nowrap',
                 statusClass(order.status),
               ]"
             >
@@ -77,18 +78,17 @@
 
           <div class="flex items-baseline gap-1 mb-4">
             <span class="text-lg font-heading font-bold text-accent">
-              ¥{{ (order.payValue / 100).toFixed(2) }}
+              ￥{{ ((order.payValue || 0) / 100).toFixed(2) }}
             </span>
             <span class="text-xs text-primary/40 line-through">
-              ¥{{ (order.actualValue / 100).toFixed(2) }}
+              ￥{{ ((order.actualValue || 0) / 100).toFixed(2) }}
             </span>
           </div>
 
-          <div class="flex gap-2">
-            <!-- 待支付 -->
+          <div class="flex gap-2 flex-wrap">
             <button
               v-if="order.status === 1"
-              @click="handlePay(order)"
+              @click="openPayModal(order)"
               class="px-4 py-1.5 rounded text-xs font-medium text-white bg-accent hover:bg-blue-600 transition-all duration-300"
             >
               去支付
@@ -100,7 +100,13 @@
             >
               取消
             </button>
-            <!-- 已支付 -->
+            <button
+              v-if="order.status === 2"
+              @click="handleUse(order)"
+              class="px-4 py-1.5 rounded text-xs font-medium text-white bg-emerald-500 hover:bg-emerald-600 transition-all duration-300"
+            >
+              核销
+            </button>
             <button
               v-if="order.status === 2"
               @click="handleRefund(order)"
@@ -108,13 +114,25 @@
             >
               退款
             </button>
+            <button
+              v-if="order.status === 5"
+              @click="handleConfirmRefund(order)"
+              class="px-4 py-1.5 rounded text-xs font-medium text-orange-600 border border-orange-200 hover:bg-orange-50 transition-all duration-300"
+            >
+              确认退款
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 编辑资料弹窗 -->
-    <Modal title="编辑资料" :visible="showEditModal" :loading="editLoading" @confirm="handleUpdateNickName" @cancel="showEditModal = false">
+    <Modal
+      title="编辑资料"
+      :visible="showEditModal"
+      :loading="editLoading"
+      @confirm="handleUpdateNickName"
+      @cancel="showEditModal = false"
+    >
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-primary/60 mb-1.5">昵称</label>
@@ -128,19 +146,31 @@
       </div>
     </Modal>
 
-    <!-- 修改密码弹窗 -->
-    <Modal title="修改密码" :visible="showPwdModal" :loading="pwdLoading" @confirm="handleChangePwd" @cancel="showPwdModal = false; pwdForm = { oldPassword: '', newPassword: '' }">
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-medium text-primary/60 mb-1.5">旧密码</label>
-          <input v-model="pwdForm.oldPassword" type="password" placeholder="••••••••"
-            class="w-full px-4 py-2.5 rounded border border-primary/10 text-sm text-primary placeholder:text-primary/30 focus:outline-none focus:border-accent/40 transition-colors duration-300" />
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-primary/60 mb-1.5">新密码</label>
-          <input v-model="pwdForm.newPassword" type="password" placeholder="••••••••"
-            class="w-full px-4 py-2.5 rounded border border-primary/10 text-sm text-primary placeholder:text-primary/30 focus:outline-none focus:border-accent/40 transition-colors duration-300" />
-        </div>
+    <Modal
+      title="选择支付方式"
+      confirm-text="确认支付"
+      :visible="showPayModal"
+      :loading="payLoading"
+      @confirm="submitPay"
+      @cancel="closePayModal"
+    >
+      <div class="space-y-3">
+        <p class="text-sm text-primary/60">
+          订单号 {{ currentPayOrder?.id || '-' }}
+        </p>
+        <button
+          v-for="item in payTypes"
+          :key="item.value"
+          @click="selectedPayType = item.value"
+          :class="[
+            'w-full text-left rounded border px-4 py-3 text-sm transition-all duration-300',
+            selectedPayType === item.value
+              ? 'border-accent bg-accent/5 text-primary'
+              : 'border-primary/10 text-primary/60 hover:border-primary/20',
+          ]"
+        >
+          {{ item.label }}
+        </button>
       </div>
     </Modal>
 
@@ -149,11 +179,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import NavBar from '../components/NavBar.vue'
 import Modal from '../components/Modal.vue'
 import Toast from '../components/Toast.vue'
-import { getMe, updateNickName, changePassword, getMyOrders, payOrder, cancelOrder, useRefund } from '../api'
+import {
+  getMe,
+  updateNickName,
+  getMyOrders,
+  payOrder,
+  cancelOrder,
+  refundOrder,
+  confirmRefund,
+  useOrder,
+} from '../api'
 
 const userInfo = ref({})
 const orders = ref([])
@@ -161,14 +200,17 @@ const orderLoading = ref(false)
 const activeStatus = ref(-1)
 
 const showEditModal = ref(false)
-const showPwdModal = ref(false)
 const editNickName = ref('')
 const editLoading = ref(false)
-const pwdLoading = ref(false)
-const pwdForm = reactive({ oldPassword: '', newPassword: '' })
+
+const showPayModal = ref(false)
+const currentPayOrder = ref(null)
+const selectedPayType = ref(1)
+const payLoading = ref(false)
 
 const toastRef = ref(null)
 const showToast = (msg, type = 'success') => toastRef.value?.show(msg, type)
+const getErrorMsg = (res, fallback) => res?.errorMsg || fallback
 
 const orderStatuses = [
   { label: '全部', value: -1 },
@@ -180,9 +222,31 @@ const orderStatuses = [
   { label: '已退款', value: 6 },
 ]
 
-const statusMap = { 1: '未支付', 2: '已支付', 3: '已核销', 4: '已取消', 5: '退款中', 6: '已退款' }
-const statusLabel = (s) => statusMap[s] || '未知'
-const statusClass = (s) => {
+const payTypes = [
+  { label: '余额支付', value: 1 },
+  { label: '支付宝', value: 2 },
+  { label: '微信', value: 3 },
+]
+
+const statusMap = {
+  1: '未支付',
+  2: '已支付',
+  3: '已核销',
+  4: '已取消',
+  5: '退款中',
+  6: '已退款',
+}
+
+const payTypeMap = {
+  1: '余额支付',
+  2: '支付宝',
+  3: '微信',
+}
+
+const statusLabel = (status) => statusMap[status] || '未知状态'
+const payTypeLabel = (payType) => payTypeMap[payType] || '未知方式'
+
+const statusClass = (status) => {
   const map = {
     1: 'bg-yellow-50 text-yellow-700',
     2: 'bg-green-50 text-green-700',
@@ -191,20 +255,24 @@ const statusClass = (s) => {
     5: 'bg-orange-50 text-orange-600',
     6: 'bg-red-50 text-red-600',
   }
-  return map[s] || 'bg-gray-50 text-gray-600'
+  return map[status] || 'bg-gray-50 text-gray-600'
 }
 
-const formatTime = (t) => {
-  if (!t) return ''
-  const d = new Date(t)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+const formatTime = (time) => {
+  if (!time) return ''
+  const date = new Date(time)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
 }
 
 const loadUser = async () => {
   try {
     const res = await getMe()
-    if (res.success) userInfo.value = res.data || {}
-  } catch { /* ignore */ }
+    if (res.success) {
+      userInfo.value = res.data || {}
+    }
+  } catch {
+    // ignore
+  }
 }
 
 const loadOrders = async () => {
@@ -213,7 +281,9 @@ const loadOrders = async () => {
     const res = await getMyOrders()
     if (res.success) {
       let data = res.data || []
-      if (activeStatus.value >= 0) data = data.filter(o => o.status === activeStatus.value)
+      if (activeStatus.value >= 0) {
+        data = data.filter((item) => item.status === activeStatus.value)
+      }
       orders.value = data
     }
   } catch {
@@ -223,13 +293,22 @@ const loadOrders = async () => {
   }
 }
 
+const openEditModal = () => {
+  editNickName.value = userInfo.value.nickName || ''
+  showEditModal.value = true
+}
+
 const handleUpdateNickName = async () => {
-  if (!editNickName.value.trim()) return
+  const nickName = editNickName.value.trim()
+  if (!nickName) {
+    showToast('请输入昵称', 'error')
+    return
+  }
   editLoading.value = true
   try {
-    const res = await updateNickName(editNickName.value.trim())
+    const res = await updateNickName(nickName)
     if (res.success) {
-      userInfo.value.nickName = editNickName.value.trim()
+      userInfo.value.nickName = nickName
       showEditModal.value = false
       showToast('修改成功')
     }
@@ -240,33 +319,34 @@ const handleUpdateNickName = async () => {
   }
 }
 
-const handleChangePwd = async () => {
-  if (!pwdForm.oldPassword || !pwdForm.newPassword) return
-  pwdLoading.value = true
-  try {
-    const res = await changePassword(pwdForm)
-    if (res.success) {
-      showPwdModal.value = false
-      pwdForm.oldPassword = ''
-      pwdForm.newPassword = ''
-      showToast('密码修改成功')
-    }
-  } catch {
-    showToast('修改失败', 'error')
-  } finally {
-    pwdLoading.value = false
-  }
+const openPayModal = (order) => {
+  currentPayOrder.value = order
+  selectedPayType.value = order.payType || 1
+  showPayModal.value = true
 }
 
-const handlePay = async (order) => {
+const closePayModal = () => {
+  showPayModal.value = false
+  currentPayOrder.value = null
+  selectedPayType.value = 1
+}
+
+const submitPay = async () => {
+  if (!currentPayOrder.value) return
+  payLoading.value = true
   try {
-    const res = await payOrder(order.id, 1)
+    const res = await payOrder(currentPayOrder.value.id, selectedPayType.value)
     if (res.success) {
-      showToast('支付成功')
-      loadOrders()
+      showToast(`已使用${payTypeLabel(selectedPayType.value)}`)
+      closePayModal()
+      await loadOrders()
+    } else {
+      showToast(getErrorMsg(res, '支付失败'), 'error')
     }
-  } catch {
-    showToast('支付失败', 'error')
+  } catch (error) {
+    showToast(error?.response?.data?.errorMsg || '支付失败', 'error')
+  } finally {
+    payLoading.value = false
   }
 }
 
@@ -275,22 +355,54 @@ const handleCancel = async (order) => {
     const res = await cancelOrder(order.id)
     if (res.success) {
       showToast('订单已取消')
-      loadOrders()
+      await loadOrders()
+    } else {
+      showToast(getErrorMsg(res, '取消失败'), 'error')
     }
-  } catch {
-    showToast('取消失败', 'error')
+  } catch (error) {
+    showToast(error?.response?.data?.errorMsg || '取消失败', 'error')
+  }
+}
+
+const handleUse = async (order) => {
+  try {
+    const res = await useOrder(order.id)
+    if (res.success) {
+      showToast('核销成功')
+      await loadOrders()
+    } else {
+      showToast(getErrorMsg(res, '核销失败'), 'error')
+    }
+  } catch (error) {
+    showToast(error?.response?.data?.errorMsg || '核销失败', 'error')
   }
 }
 
 const handleRefund = async (order) => {
   try {
-    const res = await useRefund(order.id)
+    const res = await refundOrder(order.id)
     if (res.success) {
       showToast('退款申请已提交')
-      loadOrders()
+      await loadOrders()
+    } else {
+      showToast(getErrorMsg(res, '退款失败'), 'error')
     }
-  } catch {
-    showToast('退款失败', 'error')
+  } catch (error) {
+    showToast(error?.response?.data?.errorMsg || '退款失败', 'error')
+  }
+}
+
+const handleConfirmRefund = async (order) => {
+  try {
+    const res = await confirmRefund(order.id)
+    if (res.success) {
+      showToast('退款已确认')
+      await loadOrders()
+    } else {
+      showToast(getErrorMsg(res, '确认退款失败'), 'error')
+    }
+  } catch (error) {
+    showToast(error?.response?.data?.errorMsg || '确认退款失败', 'error')
   }
 }
 

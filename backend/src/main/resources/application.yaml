@@ -56,3 +56,33 @@ mail:
   username: a2917820320@163.com
   password: YQqnd36YmKq3rJXK
   ssl: true
+
+xxl:
+  job:
+    admin:
+      addresses: ${XXL_JOB_ADMIN_ADDRESSES:http://localhost:8088/xxl-job-admin}
+    accessToken: ${XXL_JOB_ACCESS_TOKEN:}
+    executor:
+      appname: ${XXL_JOB_EXECUTOR_APPNAME:market-order-executor}
+      address: ${XXL_JOB_EXECUTOR_ADDRESS:http://host.docker.internal:9999/}
+      ip: ${XXL_JOB_EXECUTOR_IP:host.docker.internal}
+      port: ${XXL_JOB_EXECUTOR_PORT:9999}
+      logpath: ${XXL_JOB_EXECUTOR_LOGPATH:./logs/xxl-job}
+      logretentiondays: ${XXL_JOB_EXECUTOR_LOG_RETENTION_DAYS:30}
+
+rate-limit:
+  enabled: true
+  type: sentinel
+
+sentinel:
+  enabled: true
+  dashboard-server: ${SENTINEL_DASHBOARD_SERVER:localhost:8858}
+  api-port: ${SENTINEL_API_PORT:8719}
+  client-ip: ${SENTINEL_CLIENT_IP:host.docker.internal}
+  nacos:
+    server-addr: ${SENTINEL_NACOS_SERVER_ADDR:localhost:8848}
+    namespace: ${SENTINEL_NACOS_NAMESPACE:}
+    group-id: ${SENTINEL_NACOS_GROUP_ID:SENTINEL_GROUP}
+    flow-data-id: ${SENTINEL_FLOW_DATA_ID:market-sentinel-flow-rules}
+    username: ${SENTINEL_NACOS_USERNAME:nacos}
+    password: ${SENTINEL_NACOS_PASSWORD:nacos}
