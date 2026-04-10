@@ -5,6 +5,7 @@ import com.market.config.RateLimitProperties;
 import com.market.dto.Result;
 import com.market.ratelimit.RateLimitExecutorFactory;
 import com.market.ratelimit.RateLimitHandle;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -23,6 +24,9 @@ public class RateLimitAspect {
 
     @Resource
     private RateLimitExecutorFactory rateLimitExecutorFactory;
+
+    @Resource
+    private MeterRegistry meterRegistry;
 
     @Around("@annotation(com.market.annotation.RateLimit)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -43,6 +47,7 @@ public class RateLimitAspect {
                 .acquire(resource, rateLimit.permitsPerSecond(), rateLimit.timeoutMs());
 
         if (!handle.isAcquired()) {
+            meterRegistry.counter("market_rate_limit_rejected_total", "resource", resource).increment();
             if (Result.class.isAssignableFrom(signature.getReturnType())) {
                 return Result.fail(rateLimit.message());
             }

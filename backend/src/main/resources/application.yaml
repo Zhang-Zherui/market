@@ -46,9 +46,10 @@ canal:
 # JWT 配置
 jwt:
   secret: marketSecretKeyForJwtTokenGeneration2026MustBeLongEnough
-  access-token-ttl: 15    # access token 有效期（分钟）
-  refresh-token-ttl: 1440  # refresh token 有效期（分钟），24小时
-
+  # access-token-ttl: 15    # access token 有效期（分钟）
+  # refresh-token-ttl: 1440  # refresh token 有效期（分钟），24小时
+  access-token-ttl: 144000    # access token 有效期（分钟）
+  refresh-token-ttl: 144000  # refresh token 有效期（分钟），24小时
 # 邮件配置
 mail:
   host: smtp.163.com
@@ -71,8 +72,8 @@ xxl:
       logretentiondays: ${XXL_JOB_EXECUTOR_LOG_RETENTION_DAYS:30}
 
 rate-limit:
-  enabled: true
-  type: sentinel
+  enabled: ${RATE_LIMIT_ENABLED:false}
+  type: ${RATE_LIMIT_TYPE:sentinel}
 
 sentinel:
   enabled: true
@@ -86,3 +87,20 @@ sentinel:
     flow-data-id: ${SENTINEL_FLOW_DATA_ID:market-sentinel-flow-rules}
     username: ${SENTINEL_NACOS_USERNAME:nacos}
     password: ${SENTINEL_NACOS_PASSWORD:nacos}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true

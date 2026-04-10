@@ -1,28 +1,26 @@
--- 1.参数列表
--- 1.1优惠卷id
+-- 1. 参数列表
+-- 1.1 优惠券 id
 local voucherId = ARGV[1]
--- 1.2用户id
+-- 1.2 用户 id
 local userId = ARGV[2]
 
--- 2.数据key
--- 2.1库存key
+-- 2. 数据 key
 local stockKey = 'seckill:stock:' .. voucherId
--- 2.2订单key
 local orderKey = 'seckill:order:' .. voucherId
+local stock = tonumber(redis.call('get', stockKey))
 
--- 3.脚本业务
--- 3.1判断库存是否充足
-if(tonumber(redis.call('get',stockKey)) <= 0)then
-    -- 3.2 库存不足 返回1
+-- 3. 脚本业务
+-- 3.1 库存不存在或不足时直接返回
+if (not stock) or stock <= 0 then
     return 1
 end
---3.2判断用户是否下单
-if(redis.call('sismember',orderKey,userId) == 1) then
-    -- 3.3存在,说明是重复下单
+
+-- 3.2 判断用户是否已经下单
+if redis.call('sismember', orderKey, userId) == 1 then
     return 2
 end
--- 3.4扣库存
-redis.call('incrby',stockKey,-1)
--- 3.5下单并保存用户
-redis.call('sadd',orderKey,userId)
+
+-- 3.3 扣减库存并记录下单用户
+redis.call('incrby', stockKey, -1)
+redis.call('sadd', orderKey, userId)
 return 0

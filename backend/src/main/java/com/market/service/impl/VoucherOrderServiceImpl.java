@@ -14,6 +14,7 @@ import com.market.service.IVoucherOrderService;
 import com.market.service.IVoucherService;
 import com.market.utils.RedisIdWorker;
 import com.market.utils.UserHolder;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,6 +45,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private IVoucherService voucherService;
 
+    @Resource
+    private MeterRegistry meterRegistry;
+
     private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
 
     static {
@@ -59,6 +64,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             message = "当前网络正忙，请稍后重试"
     )
     public Result seckillVoucher(Long voucherId) {
+        long start = System.nanoTime();
         Long userId = UserHolder.getUser().getId();
 
         Long resultValue = stringRedisTemplate.execute(
@@ -70,6 +76,11 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
         int result = resultValue.intValue();
         if (result != 0) {
+            meterRegistry.counter(
+                    "market_seckill_requests_total",
+                    "result",
+                    result == 1 ? "stock_insufficient" : "duplicate_order"
+            ).increment();
             return Result.fail(result == 1 ? "库存不足" : "该用户重复下单");
         }
 
@@ -80,6 +91,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         voucherOrder.setVoucherId(voucherId);
 
         mqSender.sendSeckillMessage(JSON.toJSONString(voucherOrder));
+        meterRegistry.counter("market_seckill_requests_total", "result", "success").increment();
+        meterRegistry.timer("market_seckill_duration", "phase", "redis_to_mq")
+                .record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
         return Result.ok(orderId);
     }
 
@@ -255,6 +269,10 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 .set("status", 6)
                 .set("refund_time", now);
 
-        return baseMapper.update(null, wrapper);
+        int affected = baseMapper.update(null, wrapper);
+        if (affected > 0) {
+            meterRegistry.counter("market_voucher_order_auto_refund_total").increment(affected);
+        }
+        return affected;
     }
 }
