@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-04-09T21:53:56",
+  "apiBaseUrl": "http://localhost:8081",
+  "k6BaseUrl": "http://host.docker.internal:8081",
+  "voucher": {
+    "id": "7",
+    "title": "Load Test Voucher 20260409215351",
+    "stock": 100000,
+    "beginTime": "2026-04-09 21:48:51",
+    "endTime": "2026-04-10 00:53:51",
+    "created": true
+  },
+  "userCount": 4000,
+  "generatedFiles": {
+    "tokensCsv": "C:\\Users\\zhangzherui\\Desktop\\Project\\market\\backend\\loadtest\\k6\\generated\\tokens.csv",
+    "authTokensFile": "C:\\Users\\zhangzherui\\Desktop\\Project\\market\\backend\\loadtest\\k6\\generated\\auth_tokens.txt",
+    "envScript": "C:\\Users\\zhangzherui\\Desktop\\Project\\market\\backend\\loadtest\\k6\\generated\\set-auth-tokens.ps1",
+    "runK6Script": "C:\\Users\\zhangzherui\\Desktop\\Project\\market\\backend\\loadtest\\k6\\generated\\run-k6.ps1",
+    "runK6BurnScript": "C:\\Users\\zhangzherui\\Desktop\\Project\\market\\backend\\loadtest\\k6\\generated\\run-k6-burn.ps1"
+  }
+}

@@ -1,0 +1,9 @@
+1. Confirm the backend is running at http://localhost:8081
+2. Review the generated voucher id: 7
+3. Run:
+   powershell -ExecutionPolicy Bypass -File "C:\Users\zhangzherui\Desktop\Project\market\backend\loadtest\k6\generated\run-k6.ps1"
+4. Stress test harder:
+   powershell -ExecutionPolicy Bypass -File "C:\Users\zhangzherui\Desktop\Project\market\backend\loadtest\k6\generated\run-k6-burn.ps1"
+5. Open:
+   Prometheus: http://localhost:9090
+   Grafana: http://localhost:3000
