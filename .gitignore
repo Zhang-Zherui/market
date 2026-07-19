@@ -60,3 +60,8 @@ Desktop.ini
 
 # ==================== CodeBuddy ====================
 .codebuddy/
+
+# Local load-test credentials and machine-specific context
+backend/loadtest/k6/generated/auth_tokens.txt
+backend/loadtest/k6/generated/tokens.csv
+backend/loadtest/k6/generated/loadtest-context.json
