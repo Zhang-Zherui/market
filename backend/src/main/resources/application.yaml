@@ -6,12 +6,12 @@ spring:
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/market?useSSL=false&serverTimezone=UTC
-    username: root
-    password: 1234
+    username: ${MYSQL_USERNAME:root}
+    password: ${MYSQL_PASSWORD:}
   redis:
     host: localhost
     port: 6379
-    password: 1234
+    password: ${REDIS_PASSWORD:}
     lettuce:
       pool:
         max-active: 10
@@ -20,20 +20,19 @@ spring:
         time-between-eviction-runs: 10s
     database: 6
   jackson:
-    default-property-inclusion: non_null # JSON处理时忽略非空字段
+    default-property-inclusion: non_null
   rabbitmq:
-    host: localhost               # 推荐改成 localhost（更稳定）
-    port: 5672                    # ← 必须改成 5672（AMQP 协议端口）
-    username: guest               # ← 改成 guest
-    password: guest               # ← 改成 guest
+    host: localhost
+    port: 5672
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
     virtual-host: /
 mybatis-plus:
-  type-aliases-package: com.market.entity # 别名扫描包
+  type-aliases-package: com.market.entity
 logging:
   level:
     com.hmdp: debug
 
-# Canal 配置
 canal:
   host: 127.0.0.1
   port: 11111
@@ -43,19 +42,16 @@ canal:
   database: market
   batch-size: 1000
 
-# JWT 配置
 jwt:
-  secret: marketSecretKeyForJwtTokenGeneration2026MustBeLongEnough
-  # access-token-ttl: 15    # access token 有效期（分钟）
-  # refresh-token-ttl: 1440  # refresh token 有效期（分钟），24小时
-  access-token-ttl: 144000    # access token 有效期（分钟）
-  refresh-token-ttl: 144000  # refresh token 有效期（分钟），24小时
-# 邮件配置
+  secret: ${JWT_SECRET:change-me-in-production}
+  access-token-ttl: 144000
+  refresh-token-ttl: 144000
+
 mail:
   host: smtp.163.com
   port: 465
-  username: a2917820320@163.com
-  password: YQqnd36YmKq3rJXK
+  username: ${MAIL_USERNAME:}
+  password: ${MAIL_PASSWORD:}
   ssl: true
 
 xxl:
